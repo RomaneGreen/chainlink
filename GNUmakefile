@@ -27,6 +27,7 @@ else
 endif
 
 TAGGED_REPO := $(REPO):$(DOCKER_TAG)
+ECR_REPO := "$(AWS_ECR_ACCOUNT_URL):$(DOCKER_TAG)"
 
 .PHONY: install
 install: operator-ui-autoinstall install-chainlink-autoinstall ## Install chainlink and all its dependencies.
@@ -109,7 +110,8 @@ docker: ## Build the docker image.
 
 .PHONY: dockerpush
 dockerpush: ## Push the docker image to dockerhub
-	docker push $(TAGGED_REPO)
+	#docker push $(TAGGED_REPO)
+	docker push $(ECR_REPO)
 
 .PHONY: $(SGX_ENCLAVE)
 $(SGX_ENCLAVE):
