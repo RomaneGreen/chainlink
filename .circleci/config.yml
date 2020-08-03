@@ -461,18 +461,18 @@ workflows:
           filters:
             tags:
               only: /^v.*/
-      - build-publish-chainlink: {}
-          #requires:
-          #  - core-go-test
-          #  - geth-postgres
-          #  - parity-postgres
-          #  - styleguide
-          #  - json-api-client
-          #  - operator-ui
-          #  - rust
-          #filters:
-          #  tags:
-          #    only: /^v.*/
+      - build-publish-chainlink:
+          requires:
+            - core-go-test
+            - geth-postgres
+            - parity-postgres
+            - styleguide
+            - json-api-client
+            - operator-ui
+            - rust
+          filters:
+            tags:
+              only: /^v.*/
       - reportcoverage:
           requires:
             - core-go-test

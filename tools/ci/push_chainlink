@@ -32,14 +32,11 @@ tag_and_push() {
   export DOCKER_TAG=$1
   (set -x; docker tag smartcontract/chainlink:circleci smartcontract/chainlink:${DOCKER_TAG})
   (set -x; docker tag smartcontract/chainlink:circleci "${AWS_ECR_ACCOUNT_URL}:${DOCKER_TAG}")
-  docker images
   make dockerpush
 }
 
 branch_tag=`tools/ci/branch2tag ${circle_branch}` # ie: develop, latest, candidate-*, etc.
 version_tag=`tools/ci/gittag2dockertag ${circle_tag}` # aka GIT_TAG. v0.9.1 -> 0.9.1
-
-tag_and_push "test" # TODO REMOVE THIS
 
 # version tag takes precedence.
 if [ -n "${version_tag}" ]; then

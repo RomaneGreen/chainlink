@@ -110,7 +110,7 @@ docker: ## Build the docker image.
 
 .PHONY: dockerpush
 dockerpush: ## Push the docker image to dockerhub
-	#docker push $(TAGGED_REPO)
+	docker push $(TAGGED_REPO)
 	docker push $(ECR_REPO)
 
 .PHONY: $(SGX_ENCLAVE)
