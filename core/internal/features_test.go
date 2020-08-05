@@ -109,7 +109,7 @@ func TestIntegration_HttpRequestWithHeaders(t *testing.T) {
 	eth.Context("ethTx.Perform()#4 at block 23465", func(eth *cltest.EthMock) {
 		eth.Register("eth_getTransactionReceipt", confirmedReceipt) // confirmed for gas bumped txat
 	})
-	newHeads <- cltest.NewEthHeader(safe) // 23465
+	newHeads <- cltest.NewGethHeader(safe) // 23465
 
 	cltest.WaitForTxAttemptCount(t, app.Store, 1)
 
@@ -187,7 +187,7 @@ func TestIntegration_FeeBump(t *testing.T) {
 	eth.Context("ethTx.Perform()#2", func(eth *cltest.EthMock) {
 		eth.Register("eth_getTransactionReceipt", unconfirmedReceipt)
 	})
-	newHeads <- cltest.NewEthHeader(firstTxRemainsUnconfirmedAt)
+	newHeads <- cltest.NewGethHeader(firstTxRemainsUnconfirmedAt)
 	eth.EventuallyAllCalled(t)
 	jr = cltest.WaitForJobRunToPendOutgoingConfirmations(t, app.Store, jr)
 
@@ -198,7 +198,7 @@ func TestIntegration_FeeBump(t *testing.T) {
 		eth.Register("eth_getTransactionReceipt", unconfirmedReceipt)
 		eth.Register("eth_sendRawTransaction", attempt2Hash)
 	})
-	newHeads <- cltest.NewEthHeader(firstTxGasBumpAt)
+	newHeads <- cltest.NewGethHeader(firstTxGasBumpAt)
 	eth.EventuallyAllCalled(t)
 	jr = cltest.WaitForJobRunToPendOutgoingConfirmations(t, app.Store, jr)
 	cltest.WaitForTxAttemptCount(t, app.Store, 2)
@@ -209,7 +209,7 @@ func TestIntegration_FeeBump(t *testing.T) {
 		eth.Register("eth_getTransactionReceipt", unconfirmedReceipt)
 		eth.Register("eth_getTransactionReceipt", unconfirmedReceipt)
 	})
-	newHeads <- cltest.NewEthHeader(secondTxRemainsUnconfirmedAt)
+	newHeads <- cltest.NewGethHeader(secondTxRemainsUnconfirmedAt)
 	eth.EventuallyAllCalled(t)
 	jr = cltest.WaitForJobRunToPendOutgoingConfirmations(t, app.Store, jr)
 
@@ -220,7 +220,7 @@ func TestIntegration_FeeBump(t *testing.T) {
 		eth.Register("eth_getTransactionReceipt", unconfirmedReceipt)
 		eth.Register("eth_sendRawTransaction", attempt3Hash)
 	})
-	newHeads <- cltest.NewEthHeader(secondTxGasBumpAt)
+	newHeads <- cltest.NewGethHeader(secondTxGasBumpAt)
 	eth.EventuallyAllCalled(t)
 	jr = cltest.WaitForJobRunToPendOutgoingConfirmations(t, app.Store, jr)
 	cltest.WaitForTxAttemptCount(t, app.Store, 3)
@@ -230,7 +230,7 @@ func TestIntegration_FeeBump(t *testing.T) {
 	eth.Context("ethTx.Perform()#6", func(eth *cltest.EthMock) {
 		eth.Register("eth_getTransactionReceipt", thirdTxConfirmedReceipt)
 	})
-	newHeads <- cltest.NewEthHeader(thirdTxConfirmedAt)
+	newHeads <- cltest.NewGethHeader(thirdTxConfirmedAt)
 	eth.EventuallyAllCalled(t)
 	jr = cltest.WaitForJobRunToPendOutgoingConfirmations(t, app.Store, jr)
 
@@ -238,7 +238,7 @@ func TestIntegration_FeeBump(t *testing.T) {
 	eth.Context("ethTx.Perform()#7", func(eth *cltest.EthMock) {
 		eth.Register("eth_getTransactionReceipt", thirdTxConfirmedReceipt)
 	})
-	newHeads <- cltest.NewEthHeader(thirdTxSafeAt)
+	newHeads <- cltest.NewGethHeader(thirdTxSafeAt)
 	eth.EventuallyAllCalled(t)
 	jr = cltest.WaitForJobRunToComplete(t, app.Store, jr)
 
@@ -368,13 +368,13 @@ func TestIntegration_RunLog(t *testing.T) {
 
 			blockIncrease := int64(app.Store.Config.MinIncomingConfirmations())
 			minGlobalHeight := creationHeight + blockIncrease
-			newHeads <- cltest.NewEthHeader(uint64(minGlobalHeight))
+			newHeads <- cltest.Head(minGlobalHeight)
 			<-time.After(time.Second)
 			jr = cltest.JobRunStaysPendingIncomingConfirmations(t, app.Store, jr)
 			assert.Equal(t, int64(creationHeight+blockIncrease), int64(jr.TaskRuns[0].ObservedIncomingConfirmations.Uint32))
 
 			safeNumber := creationHeight + requiredConfs
-			newHeads <- cltest.NewEthHeader(uint64(safeNumber))
+			newHeads <- cltest.Head(safeNumber)
 			confirmedReceipt := &types.Receipt{
 				TxHash:      runlog.TxHash,
 				BlockHash:   test.receiptBlockHash,
@@ -448,7 +448,7 @@ func TestIntegration_ExternalAdapter_RunLogInitiated(t *testing.T) {
 	jr := cltest.WaitForRuns(t, j, app.Store, 1)[0]
 	cltest.WaitForJobRunToPendIncomingConfirmations(t, app.Store, jr)
 
-	newHeads <- cltest.NewEthHeader(logBlockNumber + 8)
+	newHeads <- cltest.NewGethHeader(logBlockNumber + 8)
 	cltest.WaitForJobRunToPendIncomingConfirmations(t, app.Store, jr)
 
 	confirmedReceipt := &types.Receipt{
@@ -460,7 +460,7 @@ func TestIntegration_ExternalAdapter_RunLogInitiated(t *testing.T) {
 		eth.Register("eth_getTransactionReceipt", confirmedReceipt)
 	})
 
-	newHeads <- cltest.NewEthHeader(logBlockNumber + 9)
+	newHeads <- cltest.NewGethHeader(logBlockNumber + 9)
 	jr = cltest.WaitForJobRunToComplete(t, app.Store, jr)
 
 	tr := jr.TaskRuns[0]
@@ -700,7 +700,7 @@ func TestIntegration_NonceManagement_firstRunWithExistingTxs(t *testing.T) {
 
 	createCompletedJobRun(100, uint64(0x100))
 
-	newHeads <- cltest.NewEthHeader(200)
+	newHeads <- cltest.NewGethHeader(200)
 	createCompletedJobRun(200, uint64(0x101))
 }
 
@@ -967,7 +967,7 @@ func TestIntegration_FluxMonitor_Deviation(t *testing.T) {
 	jrs := cltest.WaitForRuns(t, j, app.Store, 1)
 
 	// Send a head w block number 10, high enough to mark ethtx as safe.
-	header := cltest.NewEthHeader(1)
+	header := cltest.NewGethHeader(1)
 	rpcClient.On("BatchCallContext", mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
 			elems := args.Get(1).([]rpc.BatchElem)
@@ -1055,7 +1055,7 @@ func TestIntegration_FluxMonitor_NewRound(t *testing.T) {
 		Return(sub, nil)
 
 	// Log Broadcaster backfills logs
-	header := cltest.NewEthHeader(1)
+	header := cltest.NewGethHeader(1)
 	gethClient.On("HeaderByNumber", mock.Anything, mock.Anything).Return(header, nil)
 	gethClient.On("FilterLogs", mock.Anything, mock.Anything).Return([]models.Log{}, nil)
 	rpcClient.On("BatchCallContext", mock.Anything, mock.Anything).
@@ -1113,7 +1113,7 @@ func TestIntegration_FluxMonitor_NewRound(t *testing.T) {
 	_ = cltest.WaitForJobRunToPendOutgoingConfirmations(t, app.Store, jrs[0])
 
 	newHeads := <-chchNewHeads
-	newHeads <- cltest.NewEthHeader(1)
+	newHeads <- cltest.NewGethHeader(1)
 	_ = cltest.WaitForJobRunToComplete(t, app.Store, jrs[0])
 	linkEarned, err := app.GetStore().LinkEarnedFor(&j)
 	require.NoError(t, err)
